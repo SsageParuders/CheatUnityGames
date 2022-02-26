@@ -1,0 +1,12 @@
+.DS_Store
+# 说实话 我发现好多项目都有这个玩意儿
+# 但是我真不知道这个玩意儿是个啥 改天有空查查看
+/outputs/obj
+# 项目中间产物 就没有必要git了
+dump_Toram_9u_3.0.0.cs
+Riru_dump_Toram_9u_3.0.0.cs
+# 两个dump产物 太大了 git上去个压缩包就行
+/res/temp.cpp
+/res/OUT
+/res/libil2cpp.so
+build

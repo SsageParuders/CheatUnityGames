@@ -11,9 +11,6 @@
 
 // Var
 static unsigned long il2cppAddress = 0; // 存储il2cpp.so基地址
-struct UnityObject;
-
-
 
 // Method
 int (*Screen$$get_height)(); // 预定义一个方法

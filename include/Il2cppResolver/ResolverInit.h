@@ -29,6 +29,8 @@
 #include <vector>
 #include <android/log.h>
 
+using namespace std;
+
 // UnityVersion
 #define UnityVersion 2018.3.8f1 // Unity版本号 <-- 自行适配
 /* UnityVersion Compatible list
@@ -86,6 +88,5 @@ void init_il2cpp_api(){ // 初始化Unity的API
 } // 运行任何Unity自身API时 切记调用此方法初始化
 
 // Util lib
-using namespace std;
-#include "Il2cppUtils.h" // Utils
 #include "BasicStructs/BasicStructs.h" // BasicStructs
+#include "Il2cppUtils.h" // Utils

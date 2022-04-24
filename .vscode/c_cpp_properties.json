@@ -3,11 +3,6 @@
         {
             "name": "Android",
             "includePath": [
-                "/Users/hongqing/Library/Android/sdk/ndk/ollvm/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/**",
-                "/Users/hongqing/Library/Android/sdk/ndk/ollvm/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1/**",
-                "/Users/hongqing/Library/Android/sdk/ndk/ollvm/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/aarch64-linux-android/**",
-                "/Users/hongqing/Library/Android/sdk/ndk/ollvm/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android/**",
-                "/Users/hongqing/Library/Android/sdk/ndk/ollvm/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/arm-linux-androideabi/**",
                 "${workspaceFolder}/**"
             ],
             "defines": [

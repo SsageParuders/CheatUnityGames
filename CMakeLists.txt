@@ -30,6 +30,7 @@ include_directories( # 设置全局头文件目录 使其他源码文件可在�
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MemoryTools/
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MapTools/
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Dobby/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ImGUI/
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Il2cppResolver/
 )
 ##################### ⬆CMake头文件设置⬆ #####################
@@ -53,6 +54,10 @@ add_library(${PROJECT_NAME} SHARED # 生成动态库
     ${FILE_SOURCES} # 源文件
 )
 ##################### ⬆添加产物⬆ #####################
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${ANDROID_NDK}/sources/android/native_app_glue
+)
 
 ##################### ⬇连接库文件⬇ #####################
 target_link_libraries(${PROJECT_NAME} PRIVATE 

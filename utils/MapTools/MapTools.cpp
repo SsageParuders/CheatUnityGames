@@ -1,4 +1,4 @@
-#include <MapTools.h>
+#include <MapTools.hpp>
 
 int getMemPermission(unsigned long address){
     char line[PATH_MAX] = {0};

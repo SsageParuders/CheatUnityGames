@@ -8,7 +8,7 @@
             "defines": [
                 "__aarch64__"
             ],
-            "cStandard": "c99",
+            "cStandard": "c17",
             "cppStandard": "c++17",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }

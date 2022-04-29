@@ -1,4 +1,4 @@
-#include <AndroidProp.h>
+#include <AndroidProp.hpp>
 
 const char *getAndroidMac(){
     char *prop_value = (char *) malloc(PROP_VALUE_MAX);

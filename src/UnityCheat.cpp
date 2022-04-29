@@ -1,5 +1,5 @@
 // user lib
-#include "UnityCheat.h"
+#include "UnityCheat.hpp"
 
 // hack start
 void* main_thread(void*){
@@ -30,12 +30,12 @@ void* main_thread(void*){
 	 */
 	init_il2cpp_api(); // 初始化API
 
-	InitResolveFunc(Screen$$get_height, "UnityEngine.Screen::get_height");
-	InitResolveFunc(Screen$$get_width, "UnityEngine.Screen::get_width");
-	// 使用Unity游戏内的导出方法 获取屏幕宽高
-	if (Screen$$get_height && Screen$$get_width){
-		LOGI("Screen height is %d \nScreen width is %d", Screen$$get_height(), Screen$$get_width());
-	}
+	// InitResolveFunc(Screen$$get_height, "UnityEngine.Screen::get_height");
+	// InitResolveFunc(Screen$$get_width, "UnityEngine.Screen::get_width");
+	// // 使用Unity游戏内的导出方法 获取屏幕宽高
+	// if (Screen$$get_height && Screen$$get_width){
+	// 	LOGI("Screen height is %d \nScreen width is %d", Screen$$get_height(), Screen$$get_width());
+	// }
 	/**
 	 * @brief 下面是一些我们自己定义的基本数据类型
 	 */

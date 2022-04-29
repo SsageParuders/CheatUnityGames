@@ -36,14 +36,7 @@ FILE_LIST += $(wildcard $(LOCAL_PATH)/utils/MapTools/*.c*)
 FILE_LIST += $(wildcard $(LOCAL_PATH)/utils/AndroidProp/*.c*)
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 
-# C++ 编译参数 ollvm-指令替换 -- 对每个函数混淆三次 默认一次
-LOCAL_CPPFLAGS += -mllvm -sub -mllvm -sub_loop=2
-# C++ 编译参数 ollvm-字符串混淆 -- 指定随机数种子生成器
-LOCAL_CPPFLAGS += -mllvm -sobf -mllvm -aesSeed=0xada46ab5da824b96a18409c49dc91dc3
-# C++ 编译参数 ollvm-控制流扁平化 -- 启用block切分 提升平展程度 -- 对每个block混淆三次 默认一次
-LOCAL_CPPFLAGS += -mllvm -fla -mllvm -split -mllvm -split_num=2
-# C++ 编译参数 ollvm-虚假控制流 -- 对一个函数混淆三次 默认一次 -- 代码块被混淆的概率是40% 默认30% | --> 这参数有毛病，遇到imgui就会卡很长时间 <--
-# LOCAL_CPPFLAGS += -mllvm -bcf # -mllvm -bcf_loop=2 -mllvm -bcf_prob=40
+# LOCAL_CPPFLAGS += 
 
 LOCAL_LDLIBS := -lm -ldl -llog -landroid -lEGL -lGLESv2 # 链接系统库
 

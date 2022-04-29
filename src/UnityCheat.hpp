@@ -15,7 +15,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_opengl3.h>
-
+#include <backends/imgui_impl_android.h>
 // Var
 static unsigned long il2cppAddress = 0; // 存储il2cpp.so基地址
 static bool isGuiInit = false; // 是否初始化过imgui

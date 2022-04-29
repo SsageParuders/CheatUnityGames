@@ -39,7 +39,8 @@ HOOK_DEF(EGLBoolean, EglSwapBuffers, EGLDisplay dpy, EGLSurface surface){
 HOOK_DEF(void, Input, void *thiz, void *a2, void *a3){
 	// 原始函数调用
 	origInput(thiz, a2, a3);
-	LOGD("action:%d", AMotionEvent_getAction((AInputEvent *)thiz));
+	LOGD("action:%d", AMotionEvent_getAction((AInputEvent *)thiz)); // 获取动作
+	ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)thiz); // 处理imgui输入
 	return;
 }
 

@@ -16,10 +16,20 @@
 #include <imgui_internal.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <backends/imgui_impl_android.h>
+#include <font/Font.h>
+// #include <CydiaSubstrate.h> // Substrate
+
 // Var
 static unsigned long il2cppAddress = 0; // 存储il2cpp.so基地址
 static bool isGuiInit = false; // 是否初始化过imgui
-
+struct gameHackStruct { // ImGUI的CheckBox回调事件处理
+    bool isEnableCheckBox1 = false; // 是否启用CheckBox1
+    bool isEnableCheckBox2 = false; // 是否启用CheckBox2
+    bool isEnableCheckBox3 = false; // 是否启用CheckBox3
+    bool isEnableCheckBox4 = false; // 是否启用CheckBox4
+    bool isEnableCheckBox5 = false; // 是否启用CheckBox5
+} myGameHack;
+static int status = 0; // 判断作弊状态
 // Method
 int (*Screen$$get_height)(); // 预定义一个方法
 int (*Screen$$get_width)();  // 预定义一个方法

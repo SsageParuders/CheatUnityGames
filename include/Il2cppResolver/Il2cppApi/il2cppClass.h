@@ -141,3 +141,27 @@ typedef struct Il2CppArray {
     il2cpp_array_size_t max_length;
     void *vector[32];
 } Il2CppArray;
+
+// 自行添加的结构体
+typedef struct Il2CppAssemblyName{
+    const char *name;
+    const char *culture;
+    const uint8_t *public_key;
+    uint32_t hash_alg;
+    int32_t hash_len;
+    uint32_t flags;
+    int32_t major;
+    int32_t minor;
+    int32_t build;
+    int32_t revision;
+    uint8_t public_key_token[8];
+} Il2CppAssemblyName;
+
+// 自行添加的结构体
+typedef struct Il2CppAssembly{
+    Il2CppImage *image;
+    uint32_t token;
+    int32_t referencedAssemblyStart;
+    int32_t referencedAssemblyCount;
+    Il2CppAssemblyName aname;
+} Il2CppAssembly;

@@ -26,7 +26,7 @@ else # 找到了 /sdcard/outputs
     echo "\033[42;35mFind outputs SUCCEED !!\033[0m"
     echo "\033[44;37mStart clean outputs On Android\033[0m"
     # 清空上一次推送产物
-    adb shell find /sdcard/outputs -type f -delete
+    adb shell find /data/local/tmp/libs -type f -delete
     if [ $? -ne 0 ]; then
         echo "\n\033[41;37mError !! Clean outputs On Android failed !!\033[0m\n"
     else
@@ -35,7 +35,7 @@ else # 找到了 /sdcard/outputs
 fi
 
 # 推送最终生成产物 到设备的 /sdcard/outputs 目录下
-adb push outputs/libs /sdcard/outputs
+adb push outputs/libs /data/local/tmp/
 
 if [ $? -ne 0 ]; then
     echo "\033[41;37mError !! Push failed !!\033[0m\n"

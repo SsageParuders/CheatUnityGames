@@ -32,6 +32,8 @@ include_directories( # 设置全局头文件目录 使其他源码文件可在�
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Dobby/
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ImGUI/
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Il2cppResolver/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/curl/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Json/
 )
 ##################### ⬆CMake头文件设置⬆ #####################
 
@@ -45,6 +47,7 @@ FILE(GLOB_RECURSE FILE_SOURCES # 遍历子目录下所有符合情况的源文�
 ##################### ⬇设置三方库文件目录⬇ #####################
 link_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/dobby/android/${CMAKE_ANDROID_ARCH_ABI}/
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/curl/android/${CMAKE_ANDROID_ARCH_ABI}/
 )
 ##################### ⬆设置三方库文件目录⬆ #####################
 
@@ -61,6 +64,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 ##################### ⬇连接库文件⬇ #####################
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    m dl log android EGL GLESv2 dobby
+    m dl log android EGL GLESv2 dobby curl
 )
 ##################### ⬆连接库文件⬆ #####################

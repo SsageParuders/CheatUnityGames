@@ -1,2 +1,2 @@
-adb shell find /sdcard/outputs -type f -delete
-adb push outputs/libs /sdcard/outputs
+adb shell find /data/local/tmp/libs -type f -delete
+adb push outputs/libs /data/local/tmp/

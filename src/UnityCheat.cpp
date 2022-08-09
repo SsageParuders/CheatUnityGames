@@ -20,25 +20,13 @@ HOOK_DEF(int, MobStatusMaster_get_Size, void *__this, void *methodInfo){
 	}
 }
 
-// 修改 - 判断怪物移动时的移动速度 实现怪物无法位移
+// 修改 - 判断怪物移动时的移动速度 实现怪物无法位移 定怪
 HOOK_DEF(int, MobStatusMaster_get_MoveSpeed, void *__this, void *methodInfo){
 	if(myGameHack.isEnableCheckBox2){ // 开启了功能
 		return 0;
 	} else { // 未开启功能
 		return origMobStatusMaster_get_MoveSpeed(__this, methodInfo);
 	}
-}
-
-HOOK_DEF(int, MobStatusMaster_get_MaxHp, void *__this, void *methodInfo){
-	// if(myGameHack.isEnableCheckBox3){ // 开启了功能
-	// 	return 100;
-	// } else { // 未开启功能
-	// 	return origMobStatusMaster_get_MaxHp(__this, methodInfo);
-	// }
-	LOGD("MobStatusMaster_get_MaxHp is %d", origMobStatusMaster_get_MaxHp(__this, methodInfo));
-
-	// return origMobStatusMaster_get_MaxHp(__this, methodInfo);
-	return 1;
 }
 
 HOOK_DEF(void, _GMWatchManager_Update, void *instance){
@@ -60,6 +48,7 @@ HOOK_DEF(void, _GMWatchManager_Update, void *instance){
 		UnityArrayBytes *ret_of_ID = (UnityArrayBytes *) il2cpp_runtime_invoke(Encoding_GetBytes, utf_8, params, NULL);
 		AsobimoId = (char *)ret_of_ID->m_Items;
 
+		// 使用资格验证
 		if (!isAllowed && connectCount <=15 && !AsobimoId.empty()){ // 还没有进行授权验证过 或者授权验证已经10+次 并且游戏ID不为空
 			connectCount++;
 			CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
@@ -98,6 +87,7 @@ HOOK_DEF(void, _GMWatchManager_Update, void *instance){
 				LOGD("Login failed!");
 			}
 		}
+
 		if(myGameHack.isEnableCheckBox1 && isAllowed){ // 技能全屏
 			if(!myGameFunc.isFuncInit1){
 				unsigned long MobStatusMaster$$get_Size = GetMethodAddress("Assembly-CSharp", "", "MobStatusMaster", "get_Size", 0); // 修改距离判断 实现技能全屏
@@ -105,6 +95,8 @@ HOOK_DEF(void, _GMWatchManager_Update, void *instance){
 				myHook(MobStatusMaster$$get_Size, (void *)myMobStatusMaster_get_Size, (void **)&origMobStatusMaster_get_Size, "MobStatusMaster$$get_Size");
 				myGameFunc.isFuncInit1 = true;
 			}
+		} else {
+			myGameHack.isEnableCheckBox1 = false;
 		}
 
 		if(myGameHack.isEnableCheckBox2 && isAllowed){ // 定怪
@@ -114,17 +106,35 @@ HOOK_DEF(void, _GMWatchManager_Update, void *instance){
 				myHook(MobStatusMaster$$get_MoveSpeed, (void *)myMobStatusMaster_get_MoveSpeed, (void **)&origMobStatusMaster_get_MoveSpeed, "MobStatusMaster$$get_MoveSpeed");
 				myGameFunc.isFuncInit2 = true;
 			}
+		} else {
+			myGameHack.isEnableCheckBox2 = false;
 		}
 
 		if(myGameHack.isEnableCheckBox3 && isAllowed){ // 测试
 			if(!myGameFunc.isFuncInit3){
-				unsigned long MobStatusMaster$$get_MaxHp = GetMethodAddress("Assembly-CSharp", "", "MobBattleStatus", "get_CutAttack", 0); // 修改怪物移动速度 实现定点
-				LOGD("MobStatusMaster$$get_MaxHp: %p", MobStatusMaster$$get_MaxHp);
-				myHook(MobStatusMaster$$get_MaxHp, (void *)myMobStatusMaster_get_MaxHp, (void **)&origMobStatusMaster_get_MaxHp, "MobStatusMaster$$get_MaxHp");
+				// 00 00 00 05 ; 00 00 00 00 ; 3F 00 00 00 ; 3F 80 00 00 ; 40 00 00 00 ; 40 80 00 00 ; 40 C0 00 00
+				unsigned char pattern[] = { // 5D;0D;0.5F;1.0F;2F;4F;6F // 特征码
+					0x05, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x3F,
+					0x00, 0x00, 0x80, 0x3F,
+					0x00, 0x00, 0x00, 0x40,
+					0x00, 0x00, 0x80, 0x40,
+					0x00, 0x00, 0xC0, 0x40};
+				std::vector<MapsInfo> maps;
+				MapsInfo *map = new MapsInfo;
+				maps = getMapsInfo();
+				for(int i = 0; i < maps.size(); i++){
+					map = &maps[i];
+					LOGD("Memory: %lx-%lx\t Perms: %4s\t Size: %lx\t Name: %s", map->start, map->end, map->perms ,map->size, map->name);
+					memset(map, 0, sizeof(MapsInfo)); // 清空内存
+				}
+				delete map;
 				myGameFunc.isFuncInit3 = true;
 			}
+		} else {
+			myGameHack.isEnableCheckBox3 = false;
 		}
-
 	}
 	orig_GMWatchManager_Update(instance);
 }
@@ -150,25 +160,27 @@ HOOK_DEF(EGLBoolean, EglSwapBuffers, EGLDisplay dpy, EGLSurface surface){
 			isGuiInit = true; // 设置初始化过imgui
 			LOGD("[UnityCheat] Start imgui!");
 		}
-		// TODO: 菜单和回调得要封装一下
+
 		if (isGuiInit) { // 判断是否初始化过imgui
 			ImGuiIO &io = ImGui::GetIO(); // 获取imgui IO
 			ImGui_ImplOpenGL3_NewFrame(); // 更新imgui opengl
 			ImGui::NewFrame(); // 更新imgui
 			/* 菜单绘制开始 */
 			ImGui::Begin("托拉姆物语_MOD"); // 开始imgui窗口
-			ImGui::Text("游戏账号ID: %s\t\t", AsobimoId.substr(0,10).c_str()); // 显示游戏状态
+			ImGui::Text("Account ID: %s\t\t", AsobimoId.substr(0,10).c_str()); // 显示游戏状态
 			if(isAllowed){
-				ImGui::Text("已授权账号使用权~ 祝游戏愉快～");
+				ImGui::Text("Login success!!");
 			} else {
-				ImGui::Text("账号未经授权!!");
+				ImGui::Text("Login failed!!");
 			}
-			ImGui::Checkbox("全局功能初始化", &myGameHack.isEnableCheckBox0); // 初始化开关
-			ImGui::SameLine(); // 同一行
 			ImGui::Checkbox("技能全屏", &myGameHack.isEnableCheckBox1); // 显示checkbox
 			ImGui::SameLine(); // 同一行
 			ImGui::Checkbox("定怪", &myGameHack.isEnableCheckBox2); // 显示checkbox
-			ImGui::Checkbox("测试", &myGameHack.isEnableCheckBox3); // 显示checkbox
+			ImGui::SameLine(); // 同一行
+			ImGui::Checkbox("无敌", &myGameHack.isEnableCheckBox3); // 显示checkbox
+			ImGui::Text("注意事项:");
+			ImGui::Text("1. 本辅助自动验证游戏账号是否具有使用权");
+			ImGui::Text("2. 无敌需要被攻击一次后开启方可生效");
 			/* 菜单绘制结束 */
 			ImGui::EndFrame(); // 结束imgui窗口
 			ImGui::Render(); // 渲染imgui
@@ -176,36 +188,17 @@ HOOK_DEF(EGLBoolean, EglSwapBuffers, EGLDisplay dpy, EGLSurface surface){
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); // 渲染imgui opengl
 		}
 
-		if (myGameHack.isEnableCheckBox0){ // 初始化
-			if (!myGameFunc.isFuncInit0){
-				myGameFunc.isFuncInit0 = true;
-				LOGD("[UnityCheat] Init function 0!");
-				unsigned long addrUpdate = GetMethodAddress("Assembly-CSharp", "", "GMWatchManager", "Update", 0);
-				LOGD("[UnityCheat] GMWatchManager$$Update: 0x%lx", addrUpdate);
-				if (addrUpdate != 0){
-					myHook(addrUpdate, (void *)&my_GMWatchManager_Update, (void **)&orig_GMWatchManager_Update, "GMWatchManager.Update");
-				}
+		if (!myGameHack.isEnableCheckBox0 && updateCount >= 5){
+			myGameHack.isEnableCheckBox0 = true;
+			unsigned long addrUpdate = GetMethodAddress("Assembly-CSharp", "", "GMWatchManager", "Update", 0);
+			LOGD("GMWatchManager$$Update is %p", addrUpdate);
+			if (addrUpdate != 0){
+				myHook(addrUpdate, (void *)&my_GMWatchManager_Update, (void **)&orig_GMWatchManager_Update, "GMWatchManager.Update");
 			}
-		} else {
-			if (myGameFunc.isFuncInit0){ // 初始化过了
-				myGameHack.isEnableCheckBox0 = true; // 强制保持开启
-			}
+		} else if (updateCount <= 30){
+			LOGD("updateCount is %d", updateCount);
+			updateCount++;
 		}
-
-		if (myGameHack.isEnableCheckBox1){
-			if (!myGameHack.isEnableCheckBox0){
-				LOGD("[UnityCheat] Please open function 0 first!");
-				myGameHack.isEnableCheckBox1 = false;
-			}
-		}
-
-		if (myGameHack.isEnableCheckBox2){
-			if (!myGameHack.isEnableCheckBox0){
-				LOGD("[UnityCheat] Please open function 0 first!");
-				myGameHack.isEnableCheckBox2 = false;
-			}
-		}
-
 	}
 	// 原始函数调用
 	return origEglSwapBuffers(dpy, surface);
@@ -235,19 +228,44 @@ HOOK_DEF(void*, __loader_dlopen, const char *filename, int flags, const void *ca
     return handle;
 }
 
+HOOK_DEF(void *, _do_dlopen_V24, const char *name, int flags, const void *extinfo, void *caller_addr){
+	void *handle = orig_do_dlopen_V24(name, flags, extinfo, caller_addr);
+	dlopen_process(name, handle);
+	return handle;
+}
+
+HOOK_DEF(void *, _do_dlopen_V19, const char *name, int flags, const void *extinfo){
+	void *handle = orig_do_dlopen_V19(name, flags, extinfo);
+	dlopen_process(name, handle);
+	return handle;
+}
+
 // hack start
 void* main_thread(void*){
 	
 	LOGD("Start Cheat");
 
-	LOGD("Mac is: %s", getAndroidMac()); // 获取mac地址
-	LOGD("Api level: %d", getAndroidApiLevel()); // 打印Api版本
-	
 	// 适配性问题
-	void *libdl_handle = dlopen("libdl.so", RTLD_LAZY);
-	void *addr = dlsym(libdl_handle, "__loader_dlopen");
-	LOGI("__loader_dlopen at: %p", addr);
-	DobbyHook(addr, (void *)my__loader_dlopen, (void **)&orig__loader_dlopen);
+	int apiLevel = getAndroidApiLevel();
+	void *addr;
+	if (apiLevel >= 30) { // 真机
+		void *libdl_handle = dlopen("libdl.so", RTLD_LAZY);
+		addr = dlsym(libdl_handle, "__loader_dlopen");
+		LOGI("__loader_dlopen at: %p", addr);
+		DobbyHook(addr, (void *)my__loader_dlopen, (void **)&orig__loader_dlopen);
+	} else if (apiLevel >= 24) { // android 7.0 虚拟机适配
+		addr = DobbySymbolResolver(nullptr, "__dl__Z9do_dlopenPKciPK17android_dlextinfoPv"); // 通过hook掉dlopen获取il2cpp的句柄
+		LOGD("__dl__Z9do_dlopenPKciPK17android_dlextinfoPv addr: %p", addr);
+		if (addr){
+			DobbyHook(addr, (void *)my_do_dlopen_V24, (void **)&orig_do_dlopen_V24);
+		}
+	} else {
+		addr = DobbySymbolResolver(nullptr, "__dl__Z9do_dlopenPKciPK17android_dlextinfo");
+		LOGD("__dl__Z9do_dlopenPKciPK17android_dlextinfo addr: %p", addr);
+		if (addr){
+			DobbyHook(addr, (void *)my_do_dlopen_V19, (void **)&orig_do_dlopen_V19);
+		}
+	}
 
 	// initilize il2cpp api
 	do{ // 等待目标动态库初始化完成
@@ -255,6 +273,10 @@ void* main_thread(void*){
 		LOGD("Waiting for il2cpp.so has been loaded ...");
 	} while (!isLibraryLoaded("libil2cpp.so")); // 动态库已经完全加载
 
+	LOGD("Mac is: %s", getAndroidMac()); // 获取mac地址
+	LOGD("Api level: %d", getAndroidApiLevel()); // 打印Api版本
+
+	// TODO:优化dlopen处理
 	while (il2cppAddress == 0 || il2cppHandle == nullptr) {// 动态库已经完全加载
 		il2cppAddress = getModuleBase("libil2cpp.so");
 		if (il2cppAddress != 0 && il2cppHandle != nullptr){

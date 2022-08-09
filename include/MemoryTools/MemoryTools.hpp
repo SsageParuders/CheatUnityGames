@@ -18,7 +18,6 @@
 #include <iostream>
 #include <errno.h>
 #include <malloc.h>
-
 // User lib
 #include <MapTools.hpp>
 #include <dobby.h>
@@ -53,7 +52,7 @@ T readValue(unsigned long address){ // long value = readValue<long>(address)
     T temp = 0;
     readin(address, &temp, sizeof(temp));
     return temp;
-}
+} 
 
 /*写值模板函数*/
 template <typename T>
@@ -93,3 +92,5 @@ bool myHook(unsigned long address, void *myFuntion, void **origFuntion, const ch
  * @return false 
  */
 bool unHook(unsigned long address, const char *str);
+
+int AOBScan(unsigned const char *target, int tLen, unsigned const char *pattern, int pLen);

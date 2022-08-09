@@ -29,6 +29,16 @@ void init_il2cpp_api(){ // 初始化API
 // 初始化Il2cpp函数
 #define InitResolveFunc(x, y) *reinterpret_cast<void **>(&x) = (void *)il2cpp_resolve_icall(y)
 
+// 获取类
+Il2CppClass *GetIl2cppClass(const char *assName, const char *namespaceName, const char *className){
+    auto *domain = il2cpp_domain_get();                                            // 获取domain
+    il2cpp_thread_attach(domain);                                                  // 将domain附加到线程
+    const Il2CppAssembly *assembly = il2cpp_domain_assembly_open(domain, assName); // 获取domain中的assembly
+    const Il2CppImage *image = il2cpp_assembly_get_image((assembly));              // 获取assembly中的image
+    Il2CppClass *clazz = il2cpp_class_from_name(image, namespaceName, className);  // 第二个参数 命名空间 第三个参数 类名
+    return clazz;
+}
+
 // 获取property实例的get方法
 const MethodInfo *GetMethod_for_Property_Get(const char *assName, const char *namespaceName, const char *className, const char *propertyName){
     auto *domain = il2cpp_domain_get();                                            // 获取domain

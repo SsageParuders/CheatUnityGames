@@ -5,6 +5,8 @@
 #include <EGL/egl.h> // EGL
 #include <GLES2/gl2.h>
 #include <android_native_app_glue.h>
+#include <memory>
+#include <string>
 // user lib
 #include <Logger.hpp> // Log
 #include <AndroidProp.hpp> // Property
@@ -18,6 +20,7 @@
 #include <font/Font.h>
 #include <curl.h> // curl
 #include <json.hpp> // json
+
 // Var
 static unsigned long il2cppAddress = 0; // 存储il2cpp.so基地址
 static bool isGuiInit = false; // 是否初始化过imgui
@@ -60,6 +63,7 @@ struct gameFuncInit {
 } myGameFunc;
 static bool isAllowed = false; // 是否允许游戏
 static int connectCount = 0; // 连接次数
+static int updateCount = 0; // 更新次数
 const MethodInfo *AccountManager_AsobimoId; // 获取游戏ID实例
 const MethodInfo *AccountManager_get_AsobimoId; // 获取游戏ID的get方法
 const MethodInfo *Encoding_UTF8; // UTF8编码实例

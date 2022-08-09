@@ -1,15 +1,58 @@
 #include <MapTools.hpp>
+#include <MemoryTools.hpp>
 
+std::vector<MapsInfo> getMapsInfo(){
+    MapsInfo *map = new MapsInfo;
+    std::vector<MapsInfo> maps;
+    FILE *maps_fd = fopen("/proc/self/maps", "r");
+    if (maps_fd == NULL){
+        LOGD("\033[41;37mOpen /proc/self/maps Failed !!\033[0m");
+        delete map;
+        return maps;
+    }else{
+        char line[2048];
+        while (fgets(line, sizeof(line), maps_fd)){
+            sscanf(line, "%lx-%lx %4s %lx %lx:%lx %lu %s", &map->start, &map->end, map->perms, &map->useless, &map->useless, &map->useless, &map->inode, map->name); // 格式化字符串
+            map->size = map->end - map->start; // 段大小 == 结束地址 - 开始地址
+            if (strlen(map->name) == 0 && strstr(map->perms, "rw") != NULL){ // 如果段名为空(A内存) 并且段权限中包含rw(可读写)
+                // LOGD("Memory: %lx-%lx\t Perms: %4s\t Size: %lx\t Name: %s", map->start, map->end, map->perms ,map->size, map->name);
+                // 00 00 00 05 ; 00 00 00 00 ; 3F 00 00 00 ; 3F 80 00 00 ; 40 00 00 00 ; 40 80 00 00 ; 40 C0 00 00
+                maps.push_back(*map); // 将段信息放入vector中
+                // unsigned char pattern[] = { // 5D;0D;0.5F;1.0F;2F;4F;6F // 特征码
+                // 0x05, 0x00, 0x00, 0x00,
+                // 0x00, 0x00, 0x00, 0x00,
+                // 0x00, 0x00, 0x00, 0x3F,
+                // 0x00, 0x00, 0x80, 0x3F,
+                // 0x00, 0x00, 0x00, 0x40,
+                // 0x00, 0x00, 0x80, 0x40,
+                // 0x00, 0x00, 0xC0, 0x40};
+                // unsigned char *ptr = (unsigned char *)map->start;
+                // unsigned char *end = (unsigned char *)map->end;
+                // while (ptr < end - sizeof(pattern)){
+                //     if (memcmp(ptr, pattern, sizeof(pattern)) == 0){
+                //         LOGD("Memory: %lx-%lx\t Perms: %4s\t Size: %lx\t Name: %s", map->start, map->end, map->perms, map->size, map->name);
+                //         LOGD("\033[42;37mFound Pattern at %lx\033[0m", ptr);
+                //         break;
+                //     }
+                //     ptr++;
+                // }
+            }
+            memset(map, 0, sizeof(MapsInfo)); // 清空内存
+        }
+        delete map;
+        return maps;
+    }
+}
+
+/*从地址判断所属内存段的属性*/
 int getMemPermission(unsigned long address){
     char line[PATH_MAX] = {0};
     char perms[5];
     int bol = 1;
-
     FILE *fp = fopen("/proc/self/maps", "r");
     if (fp == nullptr){
         return 0;
     }
-
     while (fgets(line, PATH_MAX, fp) != nullptr){
         unsigned long start, end;
         int eol = (strchr(line, '\n') != nullptr);

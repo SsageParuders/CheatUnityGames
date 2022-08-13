@@ -1,5 +1,6 @@
 // user lib
 #include "UnityCheat.hpp"
+#include <jni.h>
 
 static size_t OnWriteData(void *buffer, size_t size, size_t nmemb, void *lpVoid){
     std::string *str = dynamic_cast<std::string *>((std::string *)lpVoid);
@@ -9,6 +10,31 @@ static size_t OnWriteData(void *buffer, size_t size, size_t nmemb, void *lpVoid)
     char *pData = (char *)buffer;
     str->append(pData, size * nmemb);
     return nmemb;
+}
+
+int index = 0;
+HOOK_DEF(int, Openat, int a, const char *b, int c) {
+
+	LOGD("Openat: %s", b);
+
+	// 改
+	if (strcmp(b, "/data/app/~~Zm8hcJovWdVRxdUVe0mjfw==/com.xiaoyou.ToramOnline.aligames.ue-0NJGTbVIakbqF6bytuwt_g==/base.apk") == 0) {
+		LOGD("Openat_change: %s", b);
+		index++;
+		LOGD("Openat_change: %d", index);
+		if (index > 288) {
+			return origOpenat(a, "/storage/emulated/0/MT2/apks/base.apk", c); // 改成新的apk 3是改
+		}
+		return origOpenat(a, b, c); // 原来的
+	}
+
+	// 原
+	if (strcmp(b, "/data/app/~~sJy_xmXWdaYtehVtAoufNg==/com.xiaoyou.ToramOnline.aligames.uc-nx0zSJDPH4MaT9mljvf0wg==/base.apk") == 0) {
+		LOGD("Openat_orig: %s", b);
+		return origOpenat(a, "/storage/emulated/0/MT2/apks/base.apk", c);
+	}
+
+	return origOpenat(a, b, c);
 }
 
 // 修改 - 判断怪物状态时对怪物距离范围的判断 实现AOE技能全屏
@@ -110,31 +136,59 @@ HOOK_DEF(void, _GMWatchManager_Update, void *instance){
 			myGameHack.isEnableCheckBox2 = false;
 		}
 
-		if(myGameHack.isEnableCheckBox3 && isAllowed){ // 测试
+		if(myGameHack.isEnableCheckBox3 && isAllowed){ // 开启了无敌按钮 并且 授权验证成功
 			if(!myGameFunc.isFuncInit3){
-				// 00 00 00 05 ; 00 00 00 00 ; 3F 00 00 00 ; 3F 80 00 00 ; 40 00 00 00 ; 40 80 00 00 ; 40 C0 00 00
-				unsigned char pattern[] = { // 5D;0D;0.5F;1.0F;2F;4F;6F // 特征码
-					0x05, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0x00, 0x00,
-					0x00, 0x00, 0x00, 0x3F,
-					0x00, 0x00, 0x80, 0x3F,
-					0x00, 0x00, 0x00, 0x40,
-					0x00, 0x00, 0x80, 0x40,
-					0x00, 0x00, 0xC0, 0x40};
-				std::vector<MapsInfo> maps;
-				MapsInfo *map = new MapsInfo;
-				maps = getMapsInfo();
-				for(int i = 0; i < maps.size(); i++){
-					map = &maps[i];
-					LOGD("Memory: %lx-%lx\t Perms: %4s\t Size: %lx\t Name: %s", map->start, map->end, map->perms ,map->size, map->name);
-					memset(map, 0, sizeof(MapsInfo)); // 清空内存
+				if (aim_add != 0){ // aim_add被赋值过 有了固定的地址
+					writeValue<int>(aim_add, 0); // 写值 实现无敌
+					myGameFunc.isFuncInit3 = true; // 已经写过值了
+				} else { // 没有初始化过 则需要搜索内存
+					// 00 00 00 05 ; 00 00 00 00 ; 3F 00 00 00 ; 3F 80 00 00 ; 40 00 00 00 ; 40 80 00 00 ; 40 C0 00 00
+					unsigned char pattern[] = {// 5D;0D;0.5F;1.0F;2F;4F;6F // 特征码
+						0x05, 0x00, 0x00, 0x00,
+						0x00, 0x00, 0x00, 0x00,
+						0x00, 0x00, 0x00, 0x3F,
+						0x00, 0x00, 0x80, 0x3F,
+						0x00, 0x00, 0x00, 0x40,
+						0x00, 0x00, 0x80, 0x40,
+						0x00, 0x00, 0xC0, 0x40};
+					std::vector<MapsInfo> maps;
+					MapsInfo *map = new MapsInfo;
+					maps = getMapsInfo();
+					for(int i = 0; i < maps.size(); i++){
+						map = &maps[i];
+						unsigned char *ptr = (unsigned char *)map->start;
+						unsigned char *end = (unsigned char *)map->end;
+						while (ptr < end - sizeof(pattern)){
+							if (memcmp(ptr, pattern, sizeof(pattern)) == 0){
+								LOGD("Memory: %lx-%lx\t Perms: %4s\t Size: %lx\t Name: %s", map->start, map->end, map->perms, map->size, map->name);
+								LOGD("\033[42;37mFound Pattern at %lx\033[0m", ptr);
+								aim_add = (unsigned long)ptr;
+								LOGD("aim_add: %lx", aim_add);
+								break;
+							}
+							ptr++;
+						}
+						memset(map, 0, sizeof(MapsInfo)); // 清空内存
+					}
 				}
-				delete map;
+			}
+		} else {
+			if (aim_add != 0){ // aim_add被赋值过 有了固定的地址
+				writeValue<int>(aim_add, 5); // 写值 取消无敌
+				myGameFunc.isFuncInit3 = false; // 取消写过值了
+			}
+			myGameHack.isEnableCheckBox3 = false;
+		}
+
+		if (myGameHack.isEnableCheckBox4 && isAllowed){ // 开启了无敌按钮 并且 授权验证成功
+			if(!myGameFunc.isFuncInit4){
 				myGameFunc.isFuncInit3 = true;
 			}
 		} else {
-			myGameHack.isEnableCheckBox3 = false;
+			isIoReLoad = false;
+			myGameHack.isEnableCheckBox4 = false;
 		}
+
 	}
 	orig_GMWatchManager_Update(instance);
 }
@@ -178,6 +232,8 @@ HOOK_DEF(EGLBoolean, EglSwapBuffers, EGLDisplay dpy, EGLSurface surface){
 			ImGui::Checkbox("定怪", &myGameHack.isEnableCheckBox2); // 显示checkbox
 			ImGui::SameLine(); // 同一行
 			ImGui::Checkbox("无敌", &myGameHack.isEnableCheckBox3); // 显示checkbox
+			// 新一行
+			ImGui::Checkbox("过检测", &myGameHack.isEnableCheckBox4); // 显示checkbox
 			ImGui::Text("注意事项:");
 			ImGui::Text("1. 本辅助自动验证游戏账号是否具有使用权");
 			ImGui::Text("2. 无敌需要被攻击一次后开启方可生效");
@@ -238,6 +294,74 @@ HOOK_DEF(void *, _do_dlopen_V19, const char *name, int flags, const void *extinf
 	void *handle = orig_do_dlopen_V19(name, flags, extinfo);
 	dlopen_process(name, handle);
 	return handle;
+}
+
+HOOK_DEF(const char *, Md5, JNIEnv *env, char *c){
+	LOGD("Md5_orig is : %s\n", c);
+
+	char *con = (char *)"xxxxxxxx";
+	for (int i = 0; i < strlen(c); i++){
+		c[i] = con[i];
+	}
+
+	LOGD("Md5_changed is : %s\n", c);
+
+	return origMd5(env, c);
+}
+
+HOOK_DEF(void *, GetApk, int64_t a, int64_t b, int64_t c,int64_t d){
+	LOGD("a is %d", a);
+	LOGD("d is %d", d);
+	return origGetApk(a, b, c, d);
+}
+
+HOOK_DEF(jobject, GetX509, JNIEnv *env, jobject a2, jstring a3){
+	LOGD("aaaa");
+	return origGetX509(env, a2, a3);
+}
+
+HOOK_DEF(jobjectArray, GetSig, JNIEnv *env, int64_t thiz){
+
+	jobjectArray array = origGetSig(env, thiz);
+	int len = env->GetArrayLength(array);
+
+	for (int i = 0; i < len; i++){
+		jstring val = (jstring)env->GetObjectArrayElement(array, i);
+		LOGD("arr[%d]_orig is :%s\n", i, env->GetStringUTFChars(val, NULL));
+	}
+
+	// 原
+	// env->SetObjectArrayElement(array, 0, env->NewStringUTF("O=xiaoyougame"));
+	// env->SetObjectArrayElement(array, 1, env->NewStringUTF("O=xiaoyougame"));
+	// env->SetObjectArrayElement(array, 2, env->NewStringUTF("F21CFED1A7212D85CAC2AAB8175A32BE"));
+	// env->SetObjectArrayElement(array, 3, env->NewStringUTF("3BD6CBBD1BFEFD308B3AF2D9A04DE1F5312D4530"));
+
+	// 改
+	env->SetObjectArrayElement(array, 0, env->NewStringUTF("xxxxx"));
+	env->SetObjectArrayElement(array, 1, env->NewStringUTF("xxxxx"));
+	env->SetObjectArrayElement(array, 2, env->NewStringUTF("xxxxx"));
+	env->SetObjectArrayElement(array, 3, env->NewStringUTF("xxxxx"));
+
+	for (int i = 0; i < len; i++){
+		jstring val = (jstring)env->GetObjectArrayElement(array, i);
+		LOGD("arr[%d]_changed is :%s\n", i, env->GetStringUTFChars(val, NULL));
+	}
+
+	return origGetSig(env, thiz);
+}
+
+HOOK_DEF(void, Exit, int a){
+	LOGD("\033[42;35mExit: %d\033[0m", a);
+	uint64_t aa = 0;
+	__asm__ __volatile__(
+		"mov %0, x30\n"
+		:"=r"(aa)
+	);
+	LOGD("x30 is %p", aa);
+	LOGD("Exit_1 called  %p", __builtin_return_address(0));
+	LOGD("Exit_2 called  %p", __builtin_return_address(1));
+	LOGD("Exit_3 called  %p", __builtin_return_address(2));
+	return ;
 }
 
 // hack start
@@ -307,6 +431,44 @@ void* main_thread(void*){
 		LOGD("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE is %p", (unsigned long)sym_input); // 打印input接收器地址
 		myHook((unsigned long)sym_input, (void *)myInput, (void **)&origInput, "_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"); // 创建hook
 	}
+
+	void *sym_exit = DobbySymbolResolver(NULL, "exit"); // 获取exit地址
+	if (NULL != sym_exit){ // 判断是否获取到了exit地址
+		LOGD("exit is %p", (unsigned long)sym_exit); // 打印exit地址
+		myHook((unsigned long)sym_exit, (void *)myExit, (void **)&origExit, "exit"); // 启动hook
+	}
+	// _Z18getCertificateInfoP7_JNIEnvP8_jobject
+	void *sym_getSig = DobbySymbolResolver("libqkcheck.so", "_Z18getCertificateInfoP7_JNIEnvP8_jobject"); // 获取getSig地址
+	if (NULL != sym_getSig){ // 判断是否获取到了getSig地址
+		LOGD("_Z18getCertificateInfoP7_JNIEnvP8_jobject is %p", (unsigned long)sym_getSig); // 打印getSig地址
+		myHook((unsigned long)sym_getSig, (void *)myGetSig, (void **)&origGetSig, "_Z18getCertificateInfoP7_JNIEnvP8_jobject"); // 启动hook
+	}
+
+	void *sym_getApk = DobbySymbolResolver("libqkcheck.so", "Java_com_game_apkverify_Check_getAPKCharacteristic"); // 获取getApk地址
+	if (NULL != sym_getApk){ // 判断是否获取到了getApk地址
+		LOGD("Java_com_game_apkverify_Check_getAPKCharacteristic is %p", (unsigned long)sym_getApk);	 // 打印getApk地址
+		myHook((unsigned long)sym_getApk, (void *)myGetApk, (void **)&origGetApk, "Java_com_game_apkverify_Check_getAPKCharacteristic"); // 启动hook
+	}
+
+	void *sym_md5 = DobbySymbolResolver("libqkcheck.so", "_Z7get_md5P7_JNIEnvPc"); // 获取md5地址
+	if (NULL != sym_md5){ // 判断是否获取到了md5地址
+		LOGD("_Z7get_md5P7_JNIEnvPc is %p", (unsigned long)sym_md5); // 打印md5地址
+		myHook((unsigned long)sym_md5, (void *)myMd5, (void **)&origMd5, "_Z7get_md5P7_JNIEnvPc"); // 启动hook
+	}
+
+	void *sym_getX509 = DobbySymbolResolver("libqkcheck.so", "_Z18getX509CertificateP7_JNIEnvP8_jobject"); // 获取getX509地址
+	if (NULL != sym_getX509){ // 判断是否获取到了getX509地址
+		LOGD("_Z18getX509CertificateP7_JNIEnvP8_jobject is %p", (unsigned long)sym_getX509); // 打印getX509地址
+		myHook((unsigned long)sym_getX509, (void *)myGetX509, (void **)&origGetX509, "_Z18getX509CertificateP7_JNIEnvP8_jobject"); // 启动hook
+	}
+
+	// sleep(3); // 等待hook完成
+
+	// void *sym_openat = DobbySymbolResolver("libc.so", "__openat"); // 获取open地址
+	// if (NULL != sym_openat){ // 判断是否获取到了open地址
+	// 	LOGD("__openat is %p", (unsigned long)sym_openat); // 打印openat地址
+	// 	myHook((unsigned long)sym_openat, (void *)myOpenat, (void **)&origOpenat, "__openat"); // 启动hook
+	// }
 
 	LOGD("Finish Cheat");
 

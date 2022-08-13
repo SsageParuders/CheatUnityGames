@@ -61,6 +61,8 @@ struct gameFuncInit {
     bool isFuncInit4 = false;
     bool isFuncInit5 = false;
 } myGameFunc;
+bool isIoReLoad = false;
+unsigned long aim_add = 0; // 无敌地址
 static bool isAllowed = false; // 是否允许游戏
 static int connectCount = 0; // 连接次数
 static int updateCount = 0; // 更新次数
